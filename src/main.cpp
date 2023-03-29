@@ -37,18 +37,6 @@ T8  TC2  2   TCLK8  TIOA8  TIOB8  TC8_IRQn  TC8_Handler  ID_TC8
 #define BUTTON_PIN 52
 #define DEBOUNCE_DELAY 50
 
-static Tc *chTC_2 = TC0;          //tone pin 2 (TIOA0) is on TC0 Ch0
-static uint32_t chNo_2 = 0;       //tone pin 2 (TIOA0) is on TC0 Ch0
-static uint32_t chID_2 = ID_TC0;  //tone pin 2 (TIOA0) is on TC0 Ch0
-static Pio *p_2 = PIOB;
-static uint32_t bit_2 = PIO_PB25B_TIOA0;
-
-static Tc *chTC_3 = TC2;          //tone pin 3 (TIOA7) is on TC2 Ch1
-static uint32_t chNo_3 = 1;       //tone pin 3 (TIOA7) is on TC2 Ch1
-static uint32_t chID_3 = ID_TC7;  //tone pin 3 (TIOA7) is on TC2 Ch1
-static Pio *p_3 = PIOC;
-static uint32_t bit_3 = PIO_PC28B_TIOA7;
-
 unsigned long currentMillis = 0;
 unsigned long previousMillis = 0;
 unsigned long scheduledMillis = 0;
@@ -61,13 +49,28 @@ int buttonState = LOW;
 int lastState = LOW;
 int trial = 0;
 
-struct player
-{
-
+struct pin {
+  Tc *chTC;
+  uint32_t chNo;
+  uint32_t chID;
+  Pio *p;
+  uint32_t bit;
 };
 
+struct player
+{
+  struct pin pin;
+};
 
-void configureToneTimer(Tc *chTC, uint32_t chNo, uint32_t chID, Pio *p, uint32_t bit) {
+static struct player players[2];
+
+void configureToneTimer(pin pin) {
+  Tc *chTC = pin.chTC;
+  uint32_t chNo = pin.chNo;
+  uint32_t chID = pin.chID;
+  Pio *p = pin.p;
+  uint32_t bit = pin.bit;
+
   // Configure TONE_PIN_2 pin as timer output
   pmc_enable_periph_clk( ID_PIOC ) ;    //tone pin 3 (TIOA7) is on PIOB
   int result = PIO_Configure( p,     //tone pin 3 (TIOA7) is on PIOB
@@ -88,8 +91,10 @@ void configureToneTimer(Tc *chTC, uint32_t chNo, uint32_t chID, Pio *p, uint32_t
   chTC->TC_CHANNEL[chNo].TC_IDR=~TC_IER_CPCS;                               
 }
 
-void setFrequencytone(Tc *chTC, uint32_t chNo, uint32_t frequency, int volume)
-{
+void setFrequencytone(pin pin, uint32_t frequency, int volume) {
+  Tc *chTC = pin.chTC;
+  uint32_t chNo = pin.chNo;
+
   if(frequency < 0 || frequency > 100001) {
     TC_Stop(chTC, chNo);                
     return;
@@ -145,16 +150,21 @@ void setup() {
   pinMode(LED_GREEN_PIN, OUTPUT);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 
-  configureToneTimer(chTC_2, chNo_2, chID_2, p_2, bit_2);
-  configureToneTimer(chTC_3, chNo_3, chID_3, p_3, bit_3);
+  players[0].pin = {TC0, 0, ID_TC0, PIOB, PIO_PB25B_TIOA0}; // physical pin 2
+  players[1].pin = {TC2, 1, ID_TC7, PIOC, PIO_PC28B_TIOA7}; // physical pin 3
+  
+  for (int i=0; i<sizeof players/sizeof players[0]; i++) {
+    configureToneTimer(players[i].pin);  
+  }
 
-  setFrequencytone(chTC_2, chNo_2, 1000, 2); 
+
+  setFrequencytone(players[0].pin, 1000, 2); 
   delay(1500);
-  setFrequencytone(chTC_3, chNo_3, 1000, 2);
+  setFrequencytone(players[1].pin, 1000, 2);
   delay(1500);
-  setFrequencytone(chTC_2, chNo_2, -1, 2);
+  setFrequencytone(players[0].pin, -1, 2);
   delay(1500);
-  setFrequencytone(chTC_3, chNo_3, -1, 2);
+  setFrequencytone(players[1].pin, -1, 2);
   
   
 
