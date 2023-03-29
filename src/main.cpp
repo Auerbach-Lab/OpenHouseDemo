@@ -32,14 +32,15 @@ T7  TC2  1   TCLK7  TIOA7  TIOB7  TC7_IRQn  TC7_Handler  ID_TC7 << tone pin 3 is
 T8  TC2  2   TCLK8  TIOA8  TIOB8  TC8_IRQn  TC8_Handler  ID_TC8 
   */
 
-#define DEBOUNCE_DELAY 50
+#define DEBOUNCE_DELAY 30
 #define TONE_STOP -1
 #define TONE_FREQ 1000
 #define TONE_DUR 300
+#define LOUD 2
+#define QUIET 7
 
 unsigned long currentMillis = 0;
-
-int trial = 0;
+uint8_t volumes[7] = {LOUD, QUIET, LOUD, LOUD, QUIET, QUIET, LOUD};
 
 struct tone_pin {
   Tc *chTC;
@@ -52,17 +53,19 @@ struct tone_pin {
 struct player
 {
   struct tone_pin pin;
+  int id;
   uint32_t button_pin;
   uint32_t led_red_pin;
   uint32_t led_green_pin;
-  unsigned long lastDebounceTime;
-  unsigned long scheduledMillis;
-  int reactionMillis;
-  int redState;
-  int greenState;
-  int buttonState;
-  int lastState;
-  bool playing;
+  unsigned long lastDebounceTime {0};
+  unsigned long scheduledMillis  {0};
+  int redState {HIGH};
+  int greenState {HIGH};
+  int buttonState {HIGH};
+  int lastState {HIGH};
+  bool playing {false}; //currently making noise for this player
+  int trial {0};
+  int32_t reactionMillis[7];
 };
 
 static struct player players[2];
@@ -75,10 +78,10 @@ void configureToneTimer(tone_pin &pin) {
   uint32_t bit = pin.bit;
 
   // Configure TONE_PIN_2 pin as timer output
-  pmc_enable_periph_clk( ID_PIOC ) ;    //tone pin 3 (TIOA7) is on PIOB
-  int result = PIO_Configure( p,     //tone pin 3 (TIOA7) is on PIOB
-			      PIO_PERIPH_B,               //tone pin 3 (TIOA7) is on PIOB
-			      bit,            //tone pin 3 (TIOA7) is on PIOB, port PC28
+  pmc_enable_periph_clk( ID_PIOC ) ;  //tone pin 3 (TIOA7) is on PIOB
+  int result = PIO_Configure( p,      //tone pin 3 (TIOA7) is on PIOB
+			      PIO_PERIPH_B,             //tone pin 3 (TIOA7) is on PIOB
+			      bit,                      //tone pin 3 (TIOA7) is on PIOB, port PC28
 			      PIO_DEFAULT);
   //Serial.println(result);
 
@@ -112,71 +115,62 @@ void setFrequencytone(tone_pin &pin, uint32_t frequency, int volume) {
   TC_Start(chTC, chNo);                 
 }
 
+void sendStatistics(player &p) {
+    float loud = (p.reactionMillis[2] + p.reactionMillis[3] + p.reactionMillis[6]) / 3;
+    float quiet = (p.reactionMillis[1] + p.reactionMillis[4] + p.reactionMillis[5]) / 3;
+    Serial.print("player=");
+    Serial.print(p.id);
+    Serial.print(" loud=");
+    Serial.print(loud);
+    Serial.print(" quiet=");
+    Serial.println(quiet);
+}
+
+
 void onRelease(player &p) {
-  p.reactionMillis = millis() - p.scheduledMillis;
-  Serial.print("player=1 ");
-  Serial.print("trial=");
-  Serial.print(trial);
-  Serial.print(" reaction=");
-  Serial.println(p.reactionMillis);
-  if (p.reactionMillis >= 0) {
+  int32_t reactionMillis = millis() - p.scheduledMillis;
+  if ((reactionMillis >= 0) && (reactionMillis < 1000)) { //correctly released button after tone played
     p.greenState = HIGH;
-  } else {
-    p.redState = HIGH;
+    p.reactionMillis[p.trial] = reactionMillis;
+    p.trial++;
+  } else {  //released button too early or too late
+    p.scheduledMillis = 0;
+    p.redState = HIGH;    
   } 
+  
+  if (p.trial >= sizeof p.reactionMillis / sizeof p.reactionMillis[0]) {  // reaction times array is full, i.e. we've done all our trials
+    p.greenState = HIGH;
+    p.redState = HIGH;
+    sendStatistics(p);
+    p.trial = 0;
+  }
 }
 
 void onPress(player &p) {
   p.scheduledMillis = millis() + random(1000,2000);
-  trial++;
-  Serial.print("player=1 ");
-  Serial.print("trial=");
-  Serial.print(trial);
-  Serial.print(" scheduled=");
-  Serial.println(p.scheduledMillis);
+  // Serial.print("player=");
+  // Serial.print(p.id);
+  // Serial.print(" trial=");
+  // Serial.print(p.trial);
+  // Serial.print(" scheduled=");
+  // Serial.println(p.scheduledMillis);
   p.redState = LOW;
   p.greenState = LOW;
 }
 
-
-void playTone() {
-
-}
-
-void sendStatistics() {
-
-}
-
 void setup() {
   Serial.begin(9600);
-  players[0] = {
-    {TC0, 0, ID_TC0, PIOB, PIO_PB25B_TIOA0}, //tone pin 2
-    52,   //uint32_t button_pin;
-    48,   //uint32_t led_red_pin;
-    50,   //uint32_t led_green_pin;
-    0,    //unsigned long lastDebounceTime;
-    0,    //unsigned long scheduledMillis;
-    0,    //int reactionMillis;
-    HIGH,  //int redState;
-    HIGH,  //int greenState;
-    HIGH,  //int buttonState;
-    HIGH,  //int lastState;
-    false //bool playing;
-  };
-  players[1] = {
-    {TC2, 1, ID_TC7, PIOC, PIO_PC28B_TIOA7}, //tone pin 2
-    53,   //uint32_t button_pin;
-    49,   //uint32_t led_red_pin;
-    51,   //uint32_t led_green_pin;
-    0,    //unsigned long lastDebounceTime;
-    0,    //unsigned long scheduledMillis;
-    0,    //int reactionMillis;
-    LOW,  //int redState;
-    LOW,  //int greenState;
-    LOW,  //int buttonState;
-    LOW,  //int lastState;
-    false //bool playing;
-  };
+  players[0].pin = {TC0, 0, ID_TC0, PIOB, PIO_PB25B_TIOA0}; //tone pin 2
+  players[0].button_pin = 52;  //uint32_t button_pin;
+  players[0].led_red_pin = 48;   //uint32_t led_red_pin;
+  players[0].led_green_pin = 50;   //uint32_t led_green_pin;
+  players[0].id = 0;
+  
+  players[1].pin ={TC2, 1, ID_TC7, PIOC, PIO_PC28B_TIOA7}; //tone pin 2
+  players[1].button_pin = 53;
+  players[1].led_red_pin = 49;
+  players[1].led_green_pin = 51;
+  players[1].id = 1;
   
   for (int i=0; i < sizeof players / sizeof players[0]; i++) {
     configureToneTimer(players[i].pin);  
@@ -185,48 +179,46 @@ void setup() {
     pinMode(players[i].button_pin, INPUT_PULLUP);
   }
 
-  setFrequencytone(players[0].pin, 1000, 2); 
-  delay(1000);
-  setFrequencytone(players[1].pin, 1000, 2);
-  delay(1000);
-  setFrequencytone(players[0].pin, -1, 2);
-  delay(1000);
-  setFrequencytone(players[1].pin, -1, 2);
-  
-
-  sendStatistics();
+  // setFrequencytone(players[0].pin, 1000, 2); 
+  // delay(1000);
+  // setFrequencytone(players[1].pin, 1000, 2);
+  // delay(1000);
+  // setFrequencytone(players[0].pin, -1, 2);
+  // delay(1000);
+  // setFrequencytone(players[1].pin, -1, 2);
 }
 
 void loop() {
-  
-  int reading = digitalRead(players[0].button_pin);
-  currentMillis = millis();
-  if(reading != players[0].lastState) {
-    players[0].lastDebounceTime = currentMillis;
-  }
-  if ((currentMillis - players[0].lastDebounceTime) > DEBOUNCE_DELAY) {
-    if (reading != players[0].buttonState) {
-      players[0].buttonState = reading;
-      if (players[0].buttonState == HIGH) {
-        onRelease(players[0]);
-      } else {
-        onPress(players[0]);
+  for (int i=0; i < sizeof players / sizeof players[i]; i++) {
+    int reading = digitalRead(players[i].button_pin);
+    currentMillis = millis();
+    if(reading != players[i].lastState) {
+      players[i].lastDebounceTime = currentMillis;
+    }
+    if ((currentMillis - players[i].lastDebounceTime) > DEBOUNCE_DELAY) {
+      if (reading != players[i].buttonState) {
+        players[i].buttonState = reading;
+        if (players[i].buttonState == HIGH) {
+          onRelease(players[i]);
+        } else {
+          onPress(players[i]);
+        }
       }
     }
-  }
-  if(!players[0].playing && players[0].scheduledMillis && (currentMillis > players[0].scheduledMillis)) {
-    players[0].playing = true;
-    setFrequencytone(players[0].pin, TONE_FREQ, 2);
-    Serial.println("tone start");
-  }
-  if(players[0].playing && (currentMillis > players[0].scheduledMillis + TONE_DUR)) {
-    setFrequencytone(players[0].pin, TONE_STOP, 2);
-    Serial.println("tone stop");
-    players[0].scheduledMillis = 0;
-    players[0].playing = false;
-  }
+    if(!players[i].playing && players[i].scheduledMillis && (currentMillis > players[i].scheduledMillis)) {
+      players[i].playing = true;
+      setFrequencytone(players[i].pin, TONE_FREQ, volumes[players[i].trial]);
+      //Serial.println("tone start");
+    }
+    if(players[i].playing && (currentMillis > players[i].scheduledMillis + TONE_DUR)) {
+      setFrequencytone(players[i].pin, TONE_STOP, 0);
+      //Serial.println("tone stop");
+      players[i].scheduledMillis = 0;
+      players[i].playing = false;
+    }
 
-  players[0].lastState = reading;
-  digitalWrite(players[0].led_red_pin, players[0].redState);
-  digitalWrite(players[0].led_green_pin, players[0].greenState);
+    players[i].lastState = reading;
+    digitalWrite(players[i].led_red_pin, players[i].redState);
+    digitalWrite(players[i].led_green_pin, players[i].greenState);
+  }
 }
