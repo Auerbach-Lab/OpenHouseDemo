@@ -2,6 +2,8 @@ Grapher <- function(scores) {
  # Adjust player data ------------------------------------------------------
   player_data =
     scores %>%
+    # remove rat scores
+    filter(str_detect(player, pattern = "Rat")) %>%
     # artificially assign an intensity value
     rename(`40` = quiet, `60` = mid, `90` = loud) %>%
     # convert to long format
