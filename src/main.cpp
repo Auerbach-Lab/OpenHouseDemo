@@ -32,15 +32,15 @@ T7  TC2  1   TCLK7  TIOA7  TIOB7  TC7_IRQn  TC7_Handler  ID_TC7 << tone pin 3 is
 T8  TC2  2   TCLK8  TIOA8  TIOB8  TC8_IRQn  TC8_Handler  ID_TC8 
   */
 
-#define DEBOUNCE_DELAY 30
+#define DEBOUNCE_DELAY 15
 #define TONE_STOP -1
 #define TONE_FREQ 1000
 #define TONE_DUR 300
-#define LOUD 2
-#define QUIET 7
-
-unsigned long currentMillis = 0;
-uint8_t volumes[7] = {LOUD, QUIET, LOUD, LOUD, QUIET, QUIET, LOUD};
+#define DONE_FREQ 2000
+#define DONE_DUR 1000
+#define LOUD 1
+#define MID 5
+#define QUIET 9
 
 struct tone_pin {
   Tc *chTC;
@@ -58,7 +58,8 @@ struct player
   uint32_t led_red_pin;
   uint32_t led_green_pin;
   unsigned long lastDebounceTime {0};
-  unsigned long scheduledMillis  {0};
+  unsigned long scheduledMillis {0};
+  unsigned long doneMillis {0};
   int redState {HIGH};
   int greenState {HIGH};
   int buttonState {HIGH};
@@ -68,7 +69,24 @@ struct player
   int32_t reactionMillis[7];
 };
 
-static struct player players[2];
+static struct player players[5];
+unsigned long currentMillis = 0;
+uint8_t volumes[10] = {LOUD, QUIET, MID, LOUD, LOUD, QUIET, MID, QUIET, LOUD, MID};
+
+void sendStatistics(player &p) {
+    float loud = (p.reactionMillis[3] + p.reactionMillis[4] + p.reactionMillis[8]) / 3;
+    float mid = (p.reactionMillis[2] + p.reactionMillis[6] + p.reactionMillis[9]) / 3;
+    float quiet = (p.reactionMillis[1] + p.reactionMillis[5] + p.reactionMillis[7]) / 3;
+    Serial.print("player=");
+    Serial.print(p.id);
+    Serial.print(" loud=");
+    Serial.print(loud);
+    Serial.print(" mid=");
+    Serial.print(mid);
+    Serial.print(" quiet=");
+    Serial.println(quiet);
+}
+
 
 void configureToneTimer(tone_pin &pin) {
   Tc *chTC = pin.chTC;
@@ -115,17 +133,6 @@ void setFrequencytone(tone_pin &pin, uint32_t frequency, int volume) {
   TC_Start(chTC, chNo);                 
 }
 
-void sendStatistics(player &p) {
-    float loud = (p.reactionMillis[2] + p.reactionMillis[3] + p.reactionMillis[6]) / 3;
-    float quiet = (p.reactionMillis[1] + p.reactionMillis[4] + p.reactionMillis[5]) / 3;
-    Serial.print("player=");
-    Serial.print(p.id);
-    Serial.print(" loud=");
-    Serial.print(loud);
-    Serial.print(" quiet=");
-    Serial.println(quiet);
-}
-
 
 void onRelease(player &p) {
   int32_t reactionMillis = millis() - p.scheduledMillis;
@@ -143,6 +150,7 @@ void onRelease(player &p) {
     p.redState = HIGH;
     sendStatistics(p);
     p.trial = 0;
+    p.doneMillis = millis() + 250;
   }
 }
 
@@ -158,19 +166,45 @@ void onPress(player &p) {
   p.greenState = LOW;
 }
 
+/*
+    TC   Ch  ExClk  I/O A  I/O B  NVIC_IRQ  IRQ_handler  PMC_id
+T0  TC0  0   TCLK0  TIOA0  TIOB0  TC0_IRQn  TC0_Handler  ID_TC0 << tone pin 2 is TIOA0
+T1  TC0  1   TCLK1  TIOA1  TIOB1  TC1_IRQn  TC1_Handler  ID_TC1 << tone pin 61 (A7) is TIOa1
+T2  TC0  2   TCLK2  TIOA2  TIOB2  TC2_IRQn  TC2_Handler  ID_TC2
+T3  TC1  0   TCLK3  TIOA3  TIOB3  TC3_IRQn  TC3_Handler  ID_TC3 
+T4  TC1  1   TCLK4  TIOA4  TIOB4  TC4_IRQn  TC4_Handler  ID_TC4
+T5  TC1  2   TCLK5  TIOA5  TIOB5  TC5_IRQn  TC5_Handler  ID_TC5
+T6  TC2  0   TCLK6  TIOA6  TIOB6  TC6_IRQn  TC6_Handler  ID_TC6 << tone pin 10 is TIOa6
+T7  TC2  1   TCLK7  TIOA7  TIOB7  TC7_IRQn  TC7_Handler  ID_TC7 << tone pin 3 is TIOa7
+T8  TC2  2   TCLK8  TIOA8  TIOB8  TC8_IRQn  TC8_Handler  ID_TC8 << tone pin 11 is TIOa8
+*/
+
 void setup() {
   Serial.begin(9600);
   players[0].pin = {TC0, 0, ID_TC0, PIOB, PIO_PB25B_TIOA0}; //tone pin 2
-  players[0].button_pin = 52;  //uint32_t button_pin;
   players[0].led_red_pin = 48;   //uint32_t led_red_pin;
   players[0].led_green_pin = 50;   //uint32_t led_green_pin;
+  players[0].button_pin = 52;  //uint32_t button_pin;
   players[0].id = 0;
   
-  players[1].pin ={TC2, 1, ID_TC7, PIOC, PIO_PC28B_TIOA7}; //tone pin 2
-  players[1].button_pin = 53;
+  players[1].pin ={TC2, 1, ID_TC7, PIOC, PIO_PC28B_TIOA7}; //tone pin 3
   players[1].led_red_pin = 49;
   players[1].led_green_pin = 51;
+  players[1].button_pin = 53;
   players[1].id = 1;
+
+  players[2].pin ={TC2, 0, ID_TC6, PIOC, PIO_PC25B_TIOA6}; //tone pin 10
+  players[2].led_red_pin = 42;
+  players[2].led_green_pin = 44;
+  players[2].button_pin = 46;
+  players[2].id = 2;
+
+  players[3].pin ={TC2, 2, ID_TC8, PIOD, PIO_PD7B_TIOA8}; //tone pin 11
+  players[3].led_red_pin = 43;
+  players[3].led_green_pin = 45;
+  players[3].button_pin = 47;
+  players[3].id = 3;
+
   
   for (int i=0; i < sizeof players / sizeof players[0]; i++) {
     configureToneTimer(players[i].pin);  
@@ -183,7 +217,7 @@ void setup() {
   // delay(1000);
   // setFrequencytone(players[1].pin, 1000, 2);
   // delay(1000);
-  // setFrequencytone(players[0].pin, -1, 2);
+  // setFrequencytone(players[0].pin, -1, 2); 42
   // delay(1000);
   // setFrequencytone(players[1].pin, -1, 2);
 }
@@ -210,10 +244,21 @@ void loop() {
       setFrequencytone(players[i].pin, TONE_FREQ, volumes[players[i].trial]);
       //Serial.println("tone start");
     }
-    if(players[i].playing && (currentMillis > players[i].scheduledMillis + TONE_DUR)) {
+    if(players[i].playing && players[i].scheduledMillis && (currentMillis > players[i].scheduledMillis + TONE_DUR)) {
       setFrequencytone(players[i].pin, TONE_STOP, 0);
       //Serial.println("tone stop");
       players[i].scheduledMillis = 0;
+      players[i].playing = false;
+    }
+    if(!players[i].playing && players[i].doneMillis && (currentMillis > players[i].doneMillis)) {
+      players[i].playing = true;
+      setFrequencytone(players[i].pin, DONE_FREQ, MID);
+      //Serial.println("tone start");
+    }
+    if(players[i].playing && players[i].doneMillis && (currentMillis > players[i].doneMillis + DONE_DUR)) {
+      setFrequencytone(players[i].pin, TONE_STOP, 0);
+      //Serial.println("tone stop");
+      players[i].doneMillis = 0;
       players[i].playing = false;
     }
 
