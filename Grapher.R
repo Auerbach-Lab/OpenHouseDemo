@@ -20,8 +20,8 @@ Grapher <- function(scores) {
 
 
   # Add rat & human average data ---------------------------------------------
-  Player_graph =
-    Human_graph +
+  Final_graph =
+    Player_graph +
       # Rat data
       geom_smooth(data = rat_data,
                   se = FALSE, na.rm = TRUE, linewidth = 2, linetype = "dotdash",
