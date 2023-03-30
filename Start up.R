@@ -46,7 +46,7 @@ Update_human_averages <- function(single_player_data) {
   new_row = tail(Human_data, n = 1)
 
   # Add new data to saved table
-  data.table::fwrite(new_row, Human_data, file = "human_average.csv", append = TRUE)
+  data.table::fwrite(new_row, file = "human_average.csv", append = TRUE)
 }
 
 
