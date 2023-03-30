@@ -36,8 +36,8 @@ T8  TC2  2   TCLK8  TIOA8  TIOB8  TC8_IRQn  TC8_Handler  ID_TC8
 #define TONE_STOP -1
 #define TONE_FREQ 1000
 #define TONE_DUR 300
-#define DONE_FREQ 2000
-#define DONE_DUR 1000
+#define DONE_FREQ 200
+#define DONE_DUR 2000
 #define LOUD 1
 #define MID 5
 #define QUIET 9
@@ -142,7 +142,10 @@ void onRelease(player &p) {
     p.trial++;
   } else {  //released button too early or too late
     p.scheduledMillis = 0;
-    p.redState = HIGH;    
+    p.redState = HIGH;
+    if(p.trial == 0) {
+      p.greenState = HIGH;
+    }
   } 
   
   if (p.trial >= sizeof p.reactionMillis / sizeof p.reactionMillis[0]) {  // reaction times array is full, i.e. we've done all our trials
@@ -150,7 +153,7 @@ void onRelease(player &p) {
     p.redState = HIGH;
     sendStatistics(p);
     p.trial = 0;
-    p.doneMillis = millis() + 250;
+    p.doneMillis = millis() + 50;
   }
 }
 
