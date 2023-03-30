@@ -29,14 +29,33 @@ rat_score_table =
   select(player, loud, mid, quiet)
 
 library(data.table)
-Human_data <- fread("Human data.csv", header = TRUE) %>% mutate(player = "Human")
+if (file.exists("human_average.csv")) {
+  Human_data <- fread("human_average.csv", header = TRUE)
+  } else {
+    Human_data <- fread("Human data.csv", header = TRUE) %>% mutate(player = "Human")
+    fwrite(Human_data, "human_average.csv")
+  }
 
 
+# Necessary functions -----------------------------------------------------
 
-# Fake human data ---------------------------------------------------------
+Update_human_averages <- function(single_player_data) {
+  # Add data to averages in memory at bottom of table
+  Human_data = bind_rows(Human_data, mutate(single_player_data, player = "Human"))
+  # pop off new row with all necessary columns for appending to existing table
+  new_row = tail(Human_data, n = 1)
 
-scores = tibble(player = c(0, 1, 2, 3),
-                     quiet = c(150, 200, 210, 189),
-                     mid = c(140, 132, 138, 178),
-                     loud = c(110, 125, 132, 112))
+  # Add new data to saved table
+  data.table::fwrite(new_row, Human_data, file = "human_average.csv", append = TRUE)
+}
+
+
+#
+#
+# # Fake human data ---------------------------------------------------------
+#
+# scores = tibble(player = c(0, 1, 2, 3),
+#                      quiet = c(150, 200, 210, 189),
+#                      mid = c(140, 132, 138, 178),
+#                      loud = c(110, 125, 132, 112))
 
