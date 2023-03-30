@@ -39,9 +39,9 @@ Grapher <- function(scores) {
          color = "Player") +
     scale_x_continuous(breaks = seq(-50, 90, by = 10)) +
     labs(title = "<span style='color:#FFD700;'>Rat</span> v. <span style='color:#CD2626;'>Human</span>: *the ultimate hearing test*") +
-    annotate(geom = "text", x = 38, y = c(129, max(player_data$reaction, rat_data$reaction)),
+    annotate(geom = "text", x = 38, y = c(12, max(player_data$reaction, rat_data$reaction)),
              label = c("Fast", "Slow" ), size = 8) +
-    annotate(geom = "text", x = c(42,88), y = 92,
+    annotate(geom = "text", x = c(42,88), y = -12,
              label = c("Quiet", "Loud" ), size = 8) +
     theme_ft_rc() +
     theme(
