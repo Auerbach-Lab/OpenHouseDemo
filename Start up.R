@@ -23,9 +23,10 @@ rat_score_table =
   select(rat_ID, rat_name, intensity, reaction) %>%
   tidyr::spread(intensity, reaction) %>%
   # sort so slowest is on bottom
-  arrange(desc(`40`)) %>% mutate(player = c("Slowest Rat", "Fastest Rat"), .before = rat_ID) %>%
+  arrange(desc(`40`)) %>% mutate(player = c("Rat (Slowest)", "Rat (Fastest)"), .before = rat_ID) %>%
   rename(quiet = `40`, mid = `60`, loud = `90`) %>%
-  select(-c(rat_ID, rat_name))
+  select(-c(rat_ID, rat_name)) %>%
+  select(player, loud, mid, quiet)
 
 library(data.table)
 Human_data <- fread("Human data.csv", header = TRUE) %>% mutate(player = "Human")

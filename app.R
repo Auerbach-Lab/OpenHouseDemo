@@ -13,7 +13,10 @@ library(shinyjs)
 library(rlang)
 library(serial, warn.conflicts = FALSE)
 
-arduino <- serialConnection(port="COM7", mode="9600,n,8,1")
+source("Start up.R")
+source("Grapher.R")
+
+arduino <- serialConnection(port="COM1", mode="9600,n,8,1")
 open(arduino)
 
 ui <- fluidPage(
@@ -32,12 +35,15 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   last_data <- reactiveVal(value = "Waiting for serial data...")
 
-  scores <- reactiveVal(data.frame(player = seq(0,3), loud = c(0,0,0,0), mid = c(0,0,0,0), quiet = c(0,0,0,0)))
+  scores <- reactiveVal(data.frame(player = as.character(seq(0,3)), loud = c(0,0,0,0), mid = c(0,0,0,0), quiet = c(0,0,0,0)))
 
   serialRead <- reactive({
     invalidateLater(50, session)
     read.serialConnection(arduino)
   })
+
+  i = 1
+
 
   observeEvent(serialRead(), {
     if (!is_null(serialRead()) && !is_empty(serialRead()) && !is_na(serialRead()) && !(serialRead() == "")) {
@@ -54,8 +60,15 @@ server <- function(input, output, session) {
       # I believe you want to do the following but I can't test it
       display_scores <- bind_rows(rat_score_table, newscores)
       scores(display_scores)
+    } else if (serialRead() == "" & i == 1) {
+      i <<- i+1
+      # test
+      newscores <- scores()
+      display_scores <- bind_rows(rat_score_table, newscores)
+      scores(display_scores)
     }
   })
+
 
   output$table <- renderDataTable(iris,
                                   options = list(
