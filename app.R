@@ -33,7 +33,7 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   last_data <- reactiveVal(value = "Waiting for serial data...")
 
-  scores <- reactiveVal(data.frame(player = as.character(c("Purple", "White", "Green", "Blue")), loud = c(0,0,0,0), mid = c(0,0,0,0), quiet = c(0,0,0,0)))
+  scores <- reactiveVal(bind_rows(rat_score_table,data.frame(player = as.character(c("Purple", "White", "Green", "Blue")), loud = c(0,0,0,0), mid = c(0,0,0,0), quiet = c(0,0,0,0))))
 
   serialRead <- reactive({
     invalidateLater(50, session)
