@@ -13,8 +13,19 @@ library(ggtext)
 # needs to be in same folder as project
 load("rat_data.Rdata")
 # Prep rat data
-rat_data = filter(rat_data, Intensity >= 40) %>% rename(reaction = Rxn, intensity = Intensity) %>%
+rat_data = ungroup(rat_data) %>% filter(intensity >= 40) %>%
   mutate(player = "Rat")
+
+# build rat_score_table
+# Note hard coded based on fastest and slowest rats with complete data
+rat_score_table =
+  filter(rat_data, rat_ID %in% c(15, 20) & intensity %in% c(40, 60, 90)) %>%
+  select(rat_ID, rat_name, intensity, reaction) %>%
+  tidyr::spread(intensity, reaction) %>%
+  # sort so slowest is on bottom
+  arrange(desc(`40`)) %>% mutate(player = c("Slowest Rat", "Fastest Rat"), .before = rat_ID) %>%
+  rename(quiet = `40`, mid = `60`, loud = `90`) %>%
+  select(-c(rat_ID, rat_name))
 
 library(data.table)
 Human_data <- fread("Human data.csv", header = TRUE) %>% mutate(player = "Human")

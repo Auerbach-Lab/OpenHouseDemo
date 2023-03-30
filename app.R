@@ -51,7 +51,9 @@ server <- function(input, output, session) {
         mutate(mid = coalesce(mid.y, mid.x)) %>%
         mutate(quiet = coalesce(quiet.y, quiet.x)) %>%
         select(-loud.x, -loud.y, -mid.x, -mid.y, -quiet.x, -quiet.y)
-      scores(newscores)
+      # I believe you want to do the following but I can't test it
+      display_scores <- bind_rows(rat_score_table, newscores)
+      scores(display_scores)
     }
   })
 
