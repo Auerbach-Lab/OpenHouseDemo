@@ -21,14 +21,14 @@
 
 
     TC   Ch  ExClk  I/O A  I/O B  NVIC_IRQ  IRQ_handler  PMC_id
-T0  TC0  0   TCLK0  TIOA0  TIOB0  TC0_IRQn  TC0_Handler  ID_TC0 << tone pin 2 is TIOA0
+T0  TC0  0   TCLK0  TIOA0  TIOB0  TC0_IRQn  TC0_Handler  ID_TC0 
 T1  TC0  1   TCLK1  TIOA1  TIOB1  TC1_IRQn  TC1_Handler  ID_TC1
 T2  TC0  2   TCLK2  TIOA2  TIOB2  TC2_IRQn  TC2_Handler  ID_TC2
 T3  TC1  0   TCLK3  TIOA3  TIOB3  TC3_IRQn  TC3_Handler  ID_TC3 
 T4  TC1  1   TCLK4  TIOA4  TIOB4  TC4_IRQn  TC4_Handler  ID_TC4
 T5  TC1  2   TCLK5  TIOA5  TIOB5  TC5_IRQn  TC5_Handler  ID_TC5
 T6  TC2  0   TCLK6  TIOA6  TIOB6  TC6_IRQn  TC6_Handler  ID_TC6
-T7  TC2  1   TCLK7  TIOA7  TIOB7  TC7_IRQn  TC7_Handler  ID_TC7 << tone pin 3 is TIOa7
+T7  TC2  1   TCLK7  TIOA7  TIOB7  TC7_IRQn  TC7_Handler  ID_TC7 
 T8  TC2  2   TCLK8  TIOA8  TIOB8  TC8_IRQn  TC8_Handler  ID_TC8 
   */
 
@@ -53,7 +53,6 @@ struct tone_pin {
 struct player
 {
   struct tone_pin pin;
-  char[8] id;
   uint32_t button_pin;
   uint32_t led_red_pin;
   uint32_t led_green_pin;
@@ -67,6 +66,7 @@ struct player
   bool playing {false}; //currently making noise for this player
   int trial {0};
   int32_t reactionMillis[10];
+  char id[8];
 };
 
 static struct player players[5];
@@ -169,12 +169,12 @@ void onPress(player &p) {
 /*
     TC   Ch  ExClk  I/O A  I/O B  NVIC_IRQ  IRQ_handler  PMC_id
 T0  TC0  0   TCLK0  TIOA0  TIOB0  TC0_IRQn  TC0_Handler  ID_TC0 << tone pin 2 is TIOA0
-T1  TC0  1   TCLK1  TIOA1  TIOB1  TC1_IRQn  TC1_Handler  ID_TC1 << tone pin 61 (A7) is TIOa1
+T1  TC0  1   TCLK1  TIOA1  TIOB1  TC1_IRQn  TC1_Handler  ID_TC1 
 T2  TC0  2   TCLK2  TIOA2  TIOB2  TC2_IRQn  TC2_Handler  ID_TC2
 T3  TC1  0   TCLK3  TIOA3  TIOB3  TC3_IRQn  TC3_Handler  ID_TC3 
 T4  TC1  1   TCLK4  TIOA4  TIOB4  TC4_IRQn  TC4_Handler  ID_TC4
 T5  TC1  2   TCLK5  TIOA5  TIOB5  TC5_IRQn  TC5_Handler  ID_TC5
-T6  TC2  0   TCLK6  TIOA6  TIOB6  TC6_IRQn  TC6_Handler  ID_TC6 << tone pin 10 is TIOa6
+T6  TC2  0   TCLK6  TIOA6  TIOB6  TC6_IRQn  TC6_Handler  ID_TC6 << tone pin 5 is TIOa6
 T7  TC2  1   TCLK7  TIOA7  TIOB7  TC7_IRQn  TC7_Handler  ID_TC7 << tone pin 3 is TIOa7
 T8  TC2  2   TCLK8  TIOA8  TIOB8  TC8_IRQn  TC8_Handler  ID_TC8 << tone pin 11 is TIOa8
 */
@@ -185,25 +185,25 @@ void setup() {
   players[0].led_red_pin = 48;   //uint32_t led_red_pin;
   players[0].led_green_pin = 50;   //uint32_t led_green_pin;
   players[0].button_pin = 52;  //uint32_t button_pin;
-  players[0].id = "Purple";
+  strcpy(players[0].id, "Purple");
   
   players[1].pin ={TC2, 1, ID_TC7, PIOC, PIO_PC28B_TIOA7}; //tone pin 3
   players[1].led_red_pin = 49;
   players[1].led_green_pin = 51;
   players[1].button_pin = 53;
-  players[1].id = "White";
+  strcpy(players[1].id, "White");
 
-  players[2].pin ={TC2, 0, ID_TC6, PIOC, PIO_PC25B_TIOA6}; //tone pin 10
+  players[2].pin ={TC2, 0, ID_TC6, PIOC, PIO_PC25B_TIOA6}; //tone pin 5
   players[2].led_red_pin = 42;
   players[2].led_green_pin = 44;
   players[2].button_pin = 46;
-  players[2].id = "Green";
+  strcpy(players[2].id, "Green");
 
   players[3].pin ={TC2, 2, ID_TC8, PIOD, PIO_PD7B_TIOA8}; //tone pin 11
   players[3].led_red_pin = 43;
   players[3].led_green_pin = 45;
   players[3].button_pin = 47;
-  players[3].id = "Blue";
+  strcpy(players[3].id, "Blue");
 
   
   for (int i=0; i < sizeof players / sizeof players[0]; i++) {
