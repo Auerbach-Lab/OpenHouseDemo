@@ -53,7 +53,7 @@ struct tone_pin {
 struct player
 {
   struct tone_pin pin;
-  int id;
+  char[8] id;
   uint32_t button_pin;
   uint32_t led_red_pin;
   uint32_t led_green_pin;
@@ -66,7 +66,7 @@ struct player
   int lastState {HIGH};
   bool playing {false}; //currently making noise for this player
   int trial {0};
-  int32_t reactionMillis[7];
+  int32_t reactionMillis[10];
 };
 
 static struct player players[5];
@@ -185,25 +185,25 @@ void setup() {
   players[0].led_red_pin = 48;   //uint32_t led_red_pin;
   players[0].led_green_pin = 50;   //uint32_t led_green_pin;
   players[0].button_pin = 52;  //uint32_t button_pin;
-  players[0].id = 0;
+  players[0].id = "Purple";
   
   players[1].pin ={TC2, 1, ID_TC7, PIOC, PIO_PC28B_TIOA7}; //tone pin 3
   players[1].led_red_pin = 49;
   players[1].led_green_pin = 51;
   players[1].button_pin = 53;
-  players[1].id = 1;
+  players[1].id = "White";
 
   players[2].pin ={TC2, 0, ID_TC6, PIOC, PIO_PC25B_TIOA6}; //tone pin 10
   players[2].led_red_pin = 42;
   players[2].led_green_pin = 44;
   players[2].button_pin = 46;
-  players[2].id = 2;
+  players[2].id = "Green";
 
   players[3].pin ={TC2, 2, ID_TC8, PIOD, PIO_PD7B_TIOA8}; //tone pin 11
   players[3].led_red_pin = 43;
   players[3].led_green_pin = 45;
   players[3].button_pin = 47;
-  players[3].id = 3;
+  players[3].id = "Blue";
 
   
   for (int i=0; i < sizeof players / sizeof players[0]; i++) {
