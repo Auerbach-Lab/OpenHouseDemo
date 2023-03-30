@@ -2,6 +2,7 @@
 
 # data manipulation
 library(dplyr)
+library(tidyr)
 
 # graphing
 library(hrbrthemes)
@@ -40,13 +41,21 @@ if (file.exists("human_average.csv")) {
 # Necessary functions -----------------------------------------------------
 
 Update_human_averages <- function(single_player_data) {
+  # artificially assign an intensity value
+  single_player_data =
+    rename(single_player_data, `40` = quiet, `60` = mid, `90` = loud) %>%
+    # Go from wide to long format
+    tidyr::gather(key = "intensity", value = "reaction", num_range("", 10:90)) %>%
+    mutate(player = "Human")
+
   # Add data to averages in memory at bottom of table
-  Human_data = bind_rows(Human_data, mutate(single_player_data, player = "Human"))
-  # pop off new row with all necessary columns for appending to existing table
-  new_row = tail(Human_data, n = 1)
+  Human_data = bind_rows(Human_data, single_player_data)
+  # pop off new rows (there should be 3) with all necessary columns for
+  # appending to existing table
+  new_row = tail(Human_data, n = 3)
 
   # Add new data to saved table
-  data.table::fwrite(new_row, Human_data, file = "human_average.csv", append = TRUE)
+  data.table::fwrite(new_row, file = "human_average.csv", append = TRUE)
 }
 
 
