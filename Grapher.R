@@ -10,23 +10,19 @@ Grapher <- function(scores) {
     tidyr::gather(key = "intensity", value = "reaction", num_range("", 10:90)) %>%
     mutate(intensity = as.numeric(intensity))
 
-
-  # Rat Graph ---------------------------------------------------------------
-  # Make 1st if wanted underneath
-
-  # Make Human graph --------------------------------------------------------
-  Human_graph =
+  # Make Player graph --------------------------------------------------------
+  Player_graph =
     player_data %>%
     # may need to convert from low, medium, high to number using mutate
     ggplot(aes(x = intensity, y = reaction, color = as.factor(player), group = as.factor(player))) +
     stat_summary(fun = mean, geom = "line", linewidth = 2) +
     stat_summary(fun = mean, geom = "point", size = 5)
 
-  # print(Human_graph)
 
+  # Add rat & human average data ---------------------------------------------
+  Human_data <- fread("human_average.csv", header = TRUE)
 
-  # Add rat data ------------------------------------------------------------
-  Final_graph =
+  Player_graph =
     Human_graph +
       # Rat data
       geom_smooth(data = rat_data,

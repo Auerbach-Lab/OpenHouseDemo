@@ -36,6 +36,14 @@ if (file.exists("human_average.csv")) {
     fwrite(Human_data, "human_average.csv")
   }
 
+
+# Necessary functions -----------------------------------------------------
+
+Update_human_averages <- function(single_player_data) {
+  data.table::fwrite(single_player_data, file = "human_average.csv", append = TRUE)
+}
+
+
 #
 #
 # # Fake human data ---------------------------------------------------------
