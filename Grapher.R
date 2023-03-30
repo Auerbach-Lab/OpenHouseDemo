@@ -27,7 +27,7 @@ Final_graph =
   Human_graph +
     # Rat data
     geom_smooth(data = rat_data,
-                se = FALSE, na.rm = TRUE, linewidth = 2, linetype = "longdash",
+                se = FALSE, na.rm = TRUE, linewidth = 2, linetype = "dotdash",
                 method = "lm", formula = y ~ x
     ) +
     geom_smooth(data = Human_data,
@@ -35,26 +35,23 @@ Final_graph =
                 method = "lm", formula = y ~ x
     ) +
   scale_color_manual(values = c(
-    "1" = "mediumorchid", "2" = "wheat3", "3" = "seagreen3", "0" = "royalblue", "Rat" = "black", "Human" = "darkgrey"
+    "1" = "mediumorchid", "2" = "grey99", "3" = "seagreen3", "0" = "royalblue", "Rat" = "firebrick3", "Human" = "gold"
   )) +
   labs(x = "Loudness\n(Intensity, dB)",
        y = "Speed\n(Average reaction time, ms)",
        color = "Player") +
   scale_x_continuous(breaks = seq(-50, 90, by = 10)) +
-  labs(title = "Rat v. human: the ultimate hearing test") +
-  annotate(geom = "text", x = 39, y = c(105, max(player_data$reaction, rat_data$reaction)),
-           label = c("Fast", "Slow" ), size = 5) +
-  annotate(geom = "text", x = c(39,91), y = 97,
-           label = c("Quiet", "Loud" ), size = 5) +
-  theme_ft_rc()
-  # theme_classic() +
-  # theme(legend.position = "right",
-  #       # legend.position = c(0.9, 0.8),
-  #       legend.background=element_blank(),
-  #       plot.title = element_text(hjust = 0.5),
-  #       panel.grid.major.x = element_line(color = rgb(235, 235, 235, 255, maxColorValue = 255)),
-  #       panel.grid.major.y = element_line(color = rgb(235, 235, 235, 255, maxColorValue = 255)),
-  # )
+  labs(title = "<span style='color:#CD2626;'>Rat</span> v. <span style='color:#FFD700;'>Human</span>: *the ultimate hearing test*") +
+  annotate(geom = "text", x = 38, y = c(129, max(player_data$reaction, rat_data$reaction)),
+           label = c("Fast", "Slow" ), size = 8) +
+  annotate(geom = "text", x = c(42,88), y = 92,
+           label = c("Quiet", "Loud" ), size = 8) +
+  theme_ft_rc() +
+  theme(
+    # plot.title = element_text(size = 32),
+    plot.title = element_markdown(size = 32)
+  )
+
 
 print(Final_graph)
 

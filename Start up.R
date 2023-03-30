@@ -4,8 +4,9 @@
 library(dplyr)
 
 # graphing
-library(ggplot2)
 library(hrbrthemes)
+library(ggplot2)
+library(ggtext)
 
 
 # Load data ---------------------------------------------------------------
