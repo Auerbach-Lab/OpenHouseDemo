@@ -46,7 +46,8 @@ Update_human_averages <- function(single_player_data) {
     rename(single_player_data, `40` = quiet, `60` = mid, `90` = loud) %>%
     # Go from wide to long format
     tidyr::gather(key = "intensity", value = "reaction", num_range("", 10:90)) %>%
-    mutate(player = "Human")
+    mutate(intensity = as.numeric(intensity),
+           player = "Human")
 
   # Add data to averages in memory at bottom of table
   Human_data = bind_rows(Human_data, single_player_data)
