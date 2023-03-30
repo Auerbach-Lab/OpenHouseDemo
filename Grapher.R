@@ -20,8 +20,6 @@ Grapher <- function(scores) {
 
 
   # Add rat & human average data ---------------------------------------------
-  Human_data <- fread("human_average.csv", header = TRUE)
-
   Player_graph =
     Human_graph +
       # Rat data

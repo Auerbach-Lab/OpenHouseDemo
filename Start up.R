@@ -40,7 +40,13 @@ if (file.exists("human_average.csv")) {
 # Necessary functions -----------------------------------------------------
 
 Update_human_averages <- function(single_player_data) {
-  data.table::fwrite(single_player_data, file = "human_average.csv", append = TRUE)
+  # Add data to averages in memory at bottom of table
+  Human_data = bind_rows(Human_data, mutate(single_player_data, player = "Human"))
+  # pop off new row with all necessary columns for appending to existing table
+  new_row = tail(Human_data, n = 1)
+
+  # Add new data to saved table
+  data.table::fwrite(new_row, Human_data, file = "human_average.csv", append = TRUE)
 }
 
 
