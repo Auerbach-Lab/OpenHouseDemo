@@ -57,13 +57,5 @@ Grapher <- function(scores) {
 
 
   print(Final_graph)
-
-
-  # Keep running total of human data ----------------------------------------
-
-  Human_data = bind_rows(Human_data, player_data %>%
-                                            mutate(player = "Human")
-                         )
-
-  data.table::fwrite(Human_data, file = "human_average.csv")
+  return(Final_graph)
 }

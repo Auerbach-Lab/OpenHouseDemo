@@ -29,14 +29,19 @@ rat_score_table =
   select(player, loud, mid, quiet)
 
 library(data.table)
-Human_data <- fread("Human data.csv", header = TRUE) %>% mutate(player = "Human")
+if (file.exists("human_average.csv")) {
+  Human_data <- fread("human_average.csv", header = TRUE)
+  } else {
+    Human_data <- fread("Human data.csv", header = TRUE) %>% mutate(player = "Human")
+    fwrite(Human_data, "human_average.csv")
+  }
 
-
-
-# Fake human data ---------------------------------------------------------
-
-scores = tibble(player = c(0, 1, 2, 3),
-                     quiet = c(150, 200, 210, 189),
-                     mid = c(140, 132, 138, 178),
-                     loud = c(110, 125, 132, 112))
+#
+#
+# # Fake human data ---------------------------------------------------------
+#
+# scores = tibble(player = c(0, 1, 2, 3),
+#                      quiet = c(150, 200, 210, 189),
+#                      mid = c(140, 132, 138, 178),
+#                      loud = c(110, 125, 132, 112))
 
