@@ -32,13 +32,13 @@ Grapher <- function(scores) {
                   method = "lm", formula = y ~ x
       ) +
     scale_color_manual(values = c(
-      "1" = "mediumorchid", "2" = "grey99", "3" = "seagreen3", "0" = "royalblue", "Rat" = "firebrick3", "Human" = "gold"
+      "Purple" = "mediumorchid", "White" = "grey99", "Green" = "seagreen3", "Blue" = "royalblue", "Rat" = "gold", "Human" = "firebrick3"
     )) +
     labs(x = "Loudness\n(Intensity, dB)",
          y = "Speed\n(Average reaction time, ms)",
          color = "Player") +
     scale_x_continuous(breaks = seq(-50, 90, by = 10)) +
-    labs(title = "<span style='color:#CD2626;'>Rat</span> v. <span style='color:#FFD700;'>Human</span>: *the ultimate hearing test*") +
+    labs(title = "<span style='color:#FFD700;'>Rat</span> v. <span style='color:#CD2626;'>Human</span>: *the ultimate hearing test*") +
     annotate(geom = "text", x = 38, y = c(129, max(player_data$reaction, rat_data$reaction)),
              label = c("Fast", "Slow" ), size = 8) +
     annotate(geom = "text", x = c(42,88), y = 92,
