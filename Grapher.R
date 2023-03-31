@@ -5,7 +5,7 @@ Grapher <- function(scores) {
     # remove rat scores
     filter(str_detect(player, pattern = "Rat", negate = TRUE)) %>%
     # artificially assign an intensity value
-    rename(`40` = quiet, `60` = mid, `90` = loud) %>%
+    rename(`40` = quiet, `90` = loud) %>%
     # convert to long format
     tidyr::gather(key = "intensity", value = "reaction", num_range("", 10:90)) %>%
     mutate(intensity = as.numeric(intensity))

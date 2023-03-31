@@ -16,7 +16,7 @@ library(serial, warn.conflicts = FALSE)
 source("Start up.R")
 source("Grapher.R")
 
-arduino <- serialConnection(port="COM9", mode="9600,n,8,1")
+arduino <- serialConnection(port="COM4", mode="9600,n,8,1")
 open(arduino)
 
 ui <- fluidPage(
@@ -44,17 +44,17 @@ server <- function(input, output, session) {
     if (!is_null(serialRead()) && !is_empty(serialRead()) && !is_na(serialRead()) && !(serialRead() == "")) {
       last_data(serialRead())
       a <- serialRead() %>% str_split(pattern = "[ =]")
-      df <- data.frame(player=as.character(a[[1]][2]), loud=as.integer(a[[1]][4]), mid=as.integer(a[[1]][6]), quiet=as.integer(a[[1]][8]))
+      df <- data.frame(player=as.character(a[[1]][2]), loud=as.integer(a[[1]][4]), quiet=as.integer(a[[1]][6]))
       Update_human_averages(df)
       newscores <- scores()
       newscores <- newscores %>%
         left_join(df, by = "player") %>%
         mutate(loud = coalesce(loud.y, loud.x)) %>%
-        mutate(mid = coalesce(mid.y, mid.x)) %>%
+        # mutate(mid = coalesce(mid.y, mid.x)) %>%
         mutate(quiet = coalesce(quiet.y, quiet.x)) %>%
-        select(-loud.x, -loud.y, -mid.x, -mid.y, -quiet.x, -quiet.y)
-      display_scores <- bind_rows(rat_score_table, newscores)
-      scores(display_scores)
+        select(-loud.x, -loud.y, -quiet.x, -quiet.y)
+      # display_scores <- bind_rows(rat_score_table, newscores)
+      scores(newscores)
     }
   })
 

@@ -65,24 +65,24 @@ struct player
   int lastState {HIGH};
   bool playing {false}; //currently making noise for this player
   int trial {0};
-  int32_t reactionMillis[10];
+  int32_t reactionMillis[7];
   char id[8];
 };
 
 static struct player players[5];
 unsigned long currentMillis = 0;
-uint8_t volumes[10] = {LOUD, QUIET, MID, LOUD, LOUD, QUIET, MID, QUIET, LOUD, MID};
+uint8_t volumes[7] = {LOUD, QUIET, LOUD, LOUD, QUIET, LOUD, QUIET};
 
 void sendStatistics(player &p) {
-    float loud = (p.reactionMillis[3] + p.reactionMillis[4] + p.reactionMillis[8]) / 3;
-    float mid = (p.reactionMillis[2] + p.reactionMillis[6] + p.reactionMillis[9]) / 3;
-    float quiet = (p.reactionMillis[1] + p.reactionMillis[5] + p.reactionMillis[7]) / 3;
+    float loud = (p.reactionMillis[2] + p.reactionMillis[3] + p.reactionMillis[5]) / 3;
+    float mid = 0;
+    float quiet = (p.reactionMillis[1] + p.reactionMillis[4] + p.reactionMillis[6]) / 2;
     Serial.print("player=");
     Serial.print(p.id);
     Serial.print(" loud=");
     Serial.print(loud);
-    Serial.print(" mid=");
-    Serial.print(mid);
+//    Serial.print(" mid=");
+//    Serial.print(mid);
     Serial.print(" quiet=");
     Serial.println(quiet);
 }
@@ -136,7 +136,7 @@ void setFrequencytone(tone_pin &pin, uint32_t frequency, int volume) {
 
 void onRelease(player &p) {
   int32_t reactionMillis = millis() - p.scheduledMillis;
-  if ((reactionMillis >= 0) && (reactionMillis < 1000)) { //correctly released button after tone played
+  if ((reactionMillis >= 0) && (reactionMillis < 2000)) { //correctly released button after tone played
     p.greenState = HIGH;
     p.reactionMillis[p.trial] = reactionMillis;
     p.trial++;
