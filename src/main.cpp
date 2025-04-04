@@ -136,6 +136,9 @@ void setFrequencytone(tone_pin &pin, uint32_t frequency, int volume) {
 
 void onRelease(player &p) {
   int32_t reactionMillis = millis() - p.scheduledMillis;
+  setFrequencytone(p.pin, TONE_STOP, 0);
+  p.scheduledMillis = 0;
+  p.playing = false;
   if ((reactionMillis >= 0) && (reactionMillis < 2000)) { //correctly released button after tone played
     p.greenState = HIGH;
     p.reactionMillis[p.trial] = reactionMillis;
@@ -253,9 +256,7 @@ void loop() {
     if(players[i].playing && players[i].scheduledMillis && (currentMillis > players[i].scheduledMillis + TONE_DUR)) {
       setFrequencytone(players[i].pin, TONE_STOP, 0);
       //Serial.println("tone stop");
-      players[i].scheduledMillis = 0;
-      players[i].playing = false;
-    }
+    }    
     if(!players[i].playing && players[i].doneMillis && (currentMillis > players[i].doneMillis)) {
       players[i].playing = true;
       setFrequencytone(players[i].pin, DONE_FREQ, MID);
