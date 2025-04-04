@@ -158,7 +158,10 @@ void onRelease(player &p) {
 }
 
 void onPress(player &p) {
-  p.scheduledMillis = millis() + random(1000,2000);
+  if (!p.playing) {
+    p.scheduledMillis = millis() + random(1000,2000);
+  }
+  
   // Serial.print("player=");
   // Serial.print(p.id);
   // Serial.print(" trial=");
